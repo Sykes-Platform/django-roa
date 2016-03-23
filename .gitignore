@@ -11,3 +11,5 @@ local_settings.py
 .vagrant/
 examples/django_rest_framework/backend/admin
 examples/django_rest_framework/backend/db.sqlite3
+# this got created during the pip install
+django_roa.egg-info
