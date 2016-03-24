@@ -15,7 +15,7 @@ from django.db.models import signals
 from django.db.models.options import Options
 from django.db.models.loading import register_models, get_model
 from django.db.models.base import ModelBase, subclass_exception, \
-    get_absolute_url, method_get_order, method_set_order
+    method_get_order, method_set_order
 from django.db.models.fields.related import (OneToOneField, add_lazy_relation)
 from django.utils.functional import curry
 from django.core.serializers.base import DeserializationError
@@ -24,8 +24,12 @@ from django.core.serializers.python import Deserializer as PythonDeserializer, _
 from functools import update_wrapper
 
 from django.utils.encoding import force_unicode, smart_unicode
-from rest_framework.parsers import JSONParser, XMLParser, YAMLParser
-from rest_framework.renderers import JSONRenderer, XMLRenderer, YAMLRenderer
+from rest_framework.parsers import JSONParser
+from rest_framework_xml.parsers import XMLParser
+from rest_framework_yaml.parsers import YAMLParser
+from rest_framework.renderers import JSONRenderer
+from rest_framework_xml.renderers import XMLRenderer
+from rest_framework_yaml.renderers import YAMLRenderer
 
 from restkit import Resource, RequestFailed, ResourceNotFound
 from django_roa.db import get_roa_headers
