@@ -302,8 +302,6 @@ class RemoteQuerySet(query.QuerySet):
                 resource.uri,
                 force_unicode(parameters)))
             response = resource.get(headers=self._get_http_headers(), **parameters)
-        # the below solved the problem 'system abends instead of handling item not found'
-        # we really want our caller to look at this and send a 404 back if this is empty
         except ResourceNotFound:
             raise Http404
         except Exception as e:
