@@ -4,6 +4,7 @@ from StringIO import StringIO
 from django.conf import settings
 from django.db.models import query
 from django.core import serializers
+from django.http import Http404
 # Django >= 1.5
 from django_roa.db import get_roa_headers
 
@@ -233,8 +234,7 @@ class RemoteQuerySet(query.QuerySet):
                 raise ROAException(u'Invalid deserialization for %s model: %s' % (self.model, serializer.errors))
 
             for item in data:
-#                yield self.model(item)
-                # the below solves two problems for us:
+                # we originally tried returning self.model(item) but the below solves two problems with that:
                 #  in data, the values of id and superseded id were both the dict of the contents of the Item
                 #  the two datetime fields were coming over as strings, causing abend when calling their isofomat()
                 new_object = self.model()
@@ -242,15 +242,6 @@ class RemoteQuerySet(query.QuerySet):
                 item_with_validated_fields = item_serializer.run_validation(item)
                 for field_name in item_with_validated_fields.keys():
                     new_object.__setattr__(field_name, item_with_validated_fields[field_name])
-#                for field_name in item.keys():
-#                    new_object.__setattr__(field_name, item[field_name])
-#                # we need to cast each field to its native type here
-#                # for the moment we can get past the worst part by hardcoding the date fields
-#                import ipdb; ipdb.set_trace()
-#                import datetime
-#                new_object.id = 1
-#                new_object.inventory_loaded_on = datetime.datetime.now()
-#                new_object.last_modified_on = datetime.datetime.now()
                 yield new_object
 
     def count(self):
@@ -311,6 +302,10 @@ class RemoteQuerySet(query.QuerySet):
                 resource.uri,
                 force_unicode(parameters)))
             response = resource.get(headers=self._get_http_headers(), **parameters)
+        # the below solved the problem 'system abends instead of handling item not found'
+        # we really want our caller to look at this and send a 404 back if this is empty
+        except ResourceNotFound:
+            raise Http404
         except Exception as e:
             raise ROAException(e)
 
@@ -325,7 +320,15 @@ class RemoteQuerySet(query.QuerySet):
         if not serializer.is_valid():
             raise ROAException(u'Invalid deserialization for %s model: %s' % (self.model, serializer.errors))
 
-        return self.model(data)
+        # we originally tried just returning self.model(data).  That caused problem with the id and date fields
+        # dates came over as strings, the value for id was the dict of all the contents of data
+        new_object = self.model()
+        item_serializer = self.model.serializer()()
+        data_with_validated_fields = item_serializer.run_validation(data)
+        for field_name in data_with_validated_fields.keys():
+            new_object.__setattr__(field_name, data_with_validated_fields[field_name])
+        new_object.id = int(data['id'])
+        return new_object
 
     def get(self, *args, **kwargs):
         """
