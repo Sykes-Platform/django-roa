@@ -15,6 +15,7 @@ except:
     from django.db.models.sql.constants import LOOKUP_SEP
 from django.db.models.query_utils import Q
 from django.utils.encoding import force_unicode
+from django.utils.dateparse import parse_datetime
 
 from restkit import Resource, ResourceNotFound
 from django_roa.db.exceptions import ROAException, ROANotImplementedYetException
@@ -233,15 +234,17 @@ class RemoteQuerySet(query.QuerySet):
             if not serializer.is_valid():
                 raise ROAException(u'Invalid deserialization for %s model: %s' % (self.model, serializer.errors))
 
+            the_model_serializer = self.model.serializer()()
             for item in data:
                 # we originally tried returning self.model(item) but the below solves two problems with that:
                 #  in data, the values of id and superseded id were both the dict of the contents of the Item
                 #  the two datetime fields were coming over as strings, causing abend when calling their isofomat()
                 new_object = self.model()
-                item_serializer = self.model.serializer()()
-                item_with_validated_fields = item_serializer.run_validation(item)
-                for field_name in item_with_validated_fields.keys():
-                    new_object.__setattr__(field_name, item_with_validated_fields[field_name])
+                for field_name in item.keys():
+                    if the_model_serializer.fields[field_name].__class__.__name__ == 'DateTimeField':
+                        new_object.__setattr__(field_name, parse_datetime(item[field_name]))
+                    else:
+                        new_object.__setattr__(field_name, item[field_name])
                 yield new_object
 
     def count(self):
@@ -318,14 +321,14 @@ class RemoteQuerySet(query.QuerySet):
         if not serializer.is_valid():
             raise ROAException(u'Invalid deserialization for %s model: %s' % (self.model, serializer.errors))
 
-        # we originally tried just returning self.model(data).  That caused problem with the id and date fields
-        # dates came over as strings, the value for id was the dict of all the contents of data
         new_object = self.model()
         item_serializer = self.model.serializer()()
-        data_with_validated_fields = item_serializer.run_validation(data)
-        for field_name in data_with_validated_fields.keys():
-            new_object.__setattr__(field_name, data_with_validated_fields[field_name])
-        new_object.id = int(data['id'])
+
+        for field_name in data:
+            if item_serializer.fields[field_name].__class__.__name__ == 'DateTimeField':
+                new_object.__setattr__(field_name, parse_datetime(data[field_name]))
+            else:
+                new_object.__setattr__(field_name, data[field_name])
         return new_object
 
     def get(self, *args, **kwargs):
