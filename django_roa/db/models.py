@@ -771,11 +771,12 @@ class ROAModel(models.Model):
             serializer = self.get_serializer(data=data)
             if not serializer.is_valid():
                 raise ROAException(u'Invalid deserialization for %s model: %s' % (self, serializer.errors))
-            try:
-                self.pk = int(serializer.object.pk)
-            except ValueError:
-                self.pk = serializer.object.pk
-            self = serializer.object
+            import pdb; pdb.set_trace()
+            for field_name in serializer.fields:
+                if serializer.fields[field_name].__class__.__name__ == 'DateTimeField':
+                    self.__setattr__(field_name, django.utils.dateparse.parse_datetime(data[field_name]))
+            if not self.id:
+                self.id = data['id']
 
         if origin:
             signals.post_save.send(sender=origin, instance=self,
