@@ -315,7 +315,18 @@ class RemoteQuerySet(query.QuerySet):
         for local_name, remote_name in ROA_MODEL_NAME_MAPPING:
             response = response.replace(remote_name, local_name)
 
-        # Deserializing objects:
+#        # Deserializing objects:
+#        # determine if our regular json parser is going to be enough or if we need to camel case stuff
+#        import importlib
+#        the_parser = self.model.get_parser()
+#        if settings.REST_FRAMEWORK:
+#            the_json_parser_name_list = [x for x in settings.REST_FRAMEWORK['DEFAULT_PARSER_CLASSES'] if 'JSON' in x]
+#            if the_json_parser_name_list:
+#                (the_path, the_class_name)= the_json_parser_name_list[0].rsplit('.', 1)
+#                the_class = getattr(importlib.import_module(the_path), the_class_name)
+#                the_parser = the_class()
+#        data = the_parser.parse(StringIO(response))
+#
         data = self.model.get_parser().parse(StringIO(response))
         serializer = self.model.get_serializer(data=data)
         if not serializer.is_valid():
