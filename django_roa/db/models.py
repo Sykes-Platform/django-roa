@@ -767,6 +767,9 @@ class ROAModel(models.Model):
 
             response = force_unicode(response.body_string()).encode(DEFAULT_CHARSET)
 
+            for local_name, remote_name in ROA_MODEL_NAME_MAPPING: 
+                response = response.replace(remote_name, local_name) 
+
             data = self.get_parser().parse(StringIO(response))
             serializer = self.get_serializer(data=data)
             if not serializer.is_valid():
