@@ -215,6 +215,9 @@ class RemoteQuerySet(query.QuerySet):
 
         response = force_unicode(response.body_string()).encode(DEFAULT_CHARSET)
 
+        for local_name, remote_name in ROA_MODEL_NAME_MAPPING:
+            response = response.replace(remote_name, local_name)
+
         # Deserializing objects:
         data = self.model.get_parser().parse(StringIO(response))
 
