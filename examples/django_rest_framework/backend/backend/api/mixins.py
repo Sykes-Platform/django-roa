@@ -27,25 +27,25 @@ class FilterByKeyMixin(object):
         Search terms are set by a ?search=... query parameter,
         and may be comma and/or whitespace delimited.
         """
-        params = request.QUERY_PARAMS.get(self.search_param, '')
+        params = request.query_params.get(self.search_param, '')
         return params.replace(',', ' ').split()
 
     def filter_queryset(self, queryset):
         """
-        Parses QUERY_PARAMS and apply them
+        Parses query_params and apply them
         """
 
-        for param in self.request.QUERY_PARAMS.keys():
+        for param in self.request.query_params.keys():
             # filter ?
             if param.startswith(self.filter_param_prefix):
                 key_ = param.split(self.filter_param_prefix)[1]
-                value_ = self.request.QUERY_PARAMS[param]
+                value_ = self.request.query_params[param]
                 if value_ is not None:
                     queryset = queryset.filter(**{'%s' % (key_): value_})
 
             # order by ?
             elif param == self.order_param:
-                value_ = self.request.QUERY_PARAMS[param]
+                value_ = self.request.query_params[param]
                 if value_ is not None:
                     queryset = queryset.order_by(value_)
 
@@ -59,8 +59,8 @@ class FilterByKeyMixin(object):
                         or_queries = [models.Q(**{orm_lookup: search_term}) for orm_lookup in orm_lookups]
                         queryset = queryset.filter(reduce(operator.or_, or_queries))
 
-        limit_start = self.request.QUERY_PARAMS.get('limit_start', None)
-        limit_stop = self.request.QUERY_PARAMS.get('limit_stop', None)
+        limit_start = self.request.query_params.get('limit_start', None)
+        limit_stop = self.request.query_params.get('limit_stop', None)
 
         if limit_stop is not None:
             limit_start = int(limit_start) if limit_start is not None else 0
