@@ -236,19 +236,10 @@ class RemoteQuerySet(query.QuerySet):
             serializer = self.model.get_serializer(data=data)
             if not serializer.is_valid():
                 raise ROAException(u'Invalid deserialization for %s model: %s' % (self.model, serializer.errors))
-
-            the_model_serializer = self.model.serializer()()
-            for item in data:
-                # we originally tried returning self.model(item) but the below solves two problems with that:
-                #  in data, the values of id and superseded id were both the dict of the contents of the Item
-                #  the two datetime fields were coming over as strings, causing abend when calling their isofomat()
-                new_object = self.model()
-                for field_name in item.keys():
-                    if the_model_serializer.fields[field_name].__class__.__name__ == 'DateTimeField':
-                        new_object.__setattr__(field_name, parse_datetime(item[field_name]))
-                    else:
-                        new_object.__setattr__(field_name, item[field_name])
-                yield new_object
+            pk_name = self.model._meta.pk.name
+            for i, item in enumerate(serializer.validated_data):
+                item[pk_name] = data[i][pk_name]
+                yield self.model(**item)
 
     def count(self):
         """
@@ -322,16 +313,14 @@ class RemoteQuerySet(query.QuerySet):
         serializer = self.model.get_serializer(data=data)
         if not serializer.is_valid():
             raise ROAException(u'Invalid deserialization for %s model: %s' % (self.model, serializer.errors))
+        
+        if pk is None:
+            return self.model(id=id, **serializer.validated_data)
+        else:
+            pk_name = self.model._meta.pk.name
+            serializer.validated_data[pk_name] = pk
+            return self.model(**serializer.validated_data)
 
-        new_object = self.model()
-        item_serializer = self.model.serializer()()
-
-        for field_name in data:
-            if item_serializer.fields[field_name].__class__.__name__ == 'DateTimeField':
-                new_object.__setattr__(field_name, parse_datetime(data[field_name]))
-            else:
-                new_object.__setattr__(field_name, data[field_name])
-        return new_object
 
     def get(self, *args, **kwargs):
         """
