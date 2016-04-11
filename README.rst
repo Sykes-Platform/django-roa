@@ -12,6 +12,7 @@ Each time a request is passed to the database, the request is intercepted and tr
 method (GET, POST, PUT or DELETE) given the get_resource_url_* methods specified in the model's definition.
 
 
+
 Documentation
 =============
 
