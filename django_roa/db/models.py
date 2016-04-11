@@ -771,15 +771,23 @@ class ROAModel(models.Model):
                 response = response.replace(remote_name, local_name) 
 
             data = self.get_parser().parse(StringIO(response))
-            serializer = self.get_serializer(data=data)
-            if not serializer.is_valid():
-                raise ROAException(u'Invalid deserialization for %s model: %s' % (self, serializer.errors))
 
-            for field_name in serializer.fields:
-                if serializer.fields[field_name].__class__.__name__ == 'DateTimeField':
-                    self.__setattr__(field_name, django.utils.dateparse.parse_datetime(data[field_name]))
-            if not self.id:
-                self.id = data['id']
+            if hasattr(self, 'alternate_get_id_from_post'):                     
+                self.id = self.alternate_get_id_from_post(data)                 
+            else:                                                               
+                serializer = self.get_serializer(data=data)                     
+                if not serializer.is_valid():                                   
+                    error_string = (u'Invalid deserialization for %s model: %s' %
+                                    (self, serializer.errors))                  
+                    raise ROAException(error_string)                            
+                                                                                
+                for field in serializer.fields:                                 
+                    field_type = serializer.fields[field].__class__.__name__    
+                    if field_type == 'DateTimeField':                           
+                        the_date = parse_datetime(data[field])                  
+                        self.__setattr__(field_name, the_date)                  
+                if not self.id:                                                 
+                    self.id = data['id']  
 
         if origin:
             signals.post_save.send(sender=origin, instance=self,
