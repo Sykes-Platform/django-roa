@@ -11,8 +11,6 @@ Now ROA works directly with an API like `Django Rest Framework <http://www.djang
 Each time a request is passed to the database, the request is intercepted and transformed to an HTTP request to the remote server with the right
 method (GET, POST, PUT or DELETE) given the get_resource_url_* methods specified in the model's definition.
 
-
-
 Documentation
 =============
 
