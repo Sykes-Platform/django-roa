@@ -15,7 +15,6 @@ except:
     from django.db.models.sql.constants import LOOKUP_SEP
 from django.db.models.query_utils import Q
 from django.utils.encoding import force_unicode
-from django.utils.dateparse import parse_datetime
 
 from restkit import Resource, ResourceNotFound
 from django_roa.db.exceptions import ROAException, ROANotImplementedYetException
@@ -313,7 +312,7 @@ class RemoteQuerySet(query.QuerySet):
         serializer = self.model.get_serializer(data=data)
         if not serializer.is_valid():
             raise ROAException(u'Invalid deserialization for %s model: %s' % (self.model, serializer.errors))
-        
+
         if pk is None:
             return self.model(id=id, **serializer.validated_data)
         else:

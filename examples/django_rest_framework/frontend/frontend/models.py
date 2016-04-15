@@ -19,7 +19,6 @@ class CommonROAModel(ROAModel):
 
 
 class Account(CommonROAModel):
-    #id = models.IntegerField(primary_key=True)  # don't forget it !
     email = models.CharField(max_length=30)
 
     api_base_name = 'accounts'
@@ -31,7 +30,6 @@ class Account(CommonROAModel):
 
 
 class Reporter(CommonROAModel):
-    #id = models.IntegerField(primary_key=True)  # don't forget it !
     account = models.OneToOneField(Account)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
@@ -45,7 +43,6 @@ class Reporter(CommonROAModel):
 
 
 class Article(CommonROAModel):
-    #id = models.IntegerField(primary_key=True)  # don't forget it !
     headline = models.CharField(max_length=100)
     pub_date = models.DateField()
     reporter = models.ForeignKey(Reporter, related_name='articles')
@@ -59,7 +56,6 @@ class Article(CommonROAModel):
 
 
 class Tag(CommonROAModel):
-    #id = models.IntegerField(primary_key=True)  # don't forget it !
     label = models.CharField(max_length=30)
     articles = models.ManyToManyField(Article, related_name='tags')
 
