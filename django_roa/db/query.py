@@ -1,4 +1,5 @@
 import logging
+import re
 from StringIO import StringIO
 
 from django.conf import settings
@@ -206,6 +207,11 @@ class RemoteQuerySet(query.QuerySet):
                           self.model.__name__,
                           resource.uri,
                           force_unicode(parameters)))
+            for key in parameters:
+                match_object = re.search('^filter_(\w+)', key)
+                if match_object:
+                    parameters[match_object.group(1)] = parameters[key]
+                    del(parameters[key])
             response = resource.get(headers=self._get_http_headers(), **parameters)
         except ResourceNotFound:
             return
